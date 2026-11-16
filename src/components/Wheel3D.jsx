@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
-import { Sparkles, Zap, AlertTriangle, Crosshair } from 'lucide-react';
+import { Sparkles, Zap, AlertTriangle, Crosshair, Play } from 'lucide-react';
 import { useBingoStore } from '../store/useBingoStore';
 import { GACHA_EFFECTS, formatWheelLabel } from '../utils/defaultCategories';
 import { useSoundEffects } from '../hooks/useSoundEffects';
@@ -17,6 +17,7 @@ export default function Wheel3D() {
   const drawnNumbers = useBingoStore((s) => s.drawnNumbers);
   const audioEnabled = useBingoStore((s) => s.audioEnabled);
   const completeSpin = useBingoStore((s) => s.completeSpin);
+  const triggerSpin = useBingoStore((s) => s.triggerSpin);
 
   const {
     playTick,
@@ -421,7 +422,15 @@ export default function Wheel3D() {
 
       {/* Main 3D Slot-Machine Viewport */}
       <div
+        onClick={() => {
+          if (!isSpinning && drawnNumbers.length < categories.length) {
+            triggerSpin();
+          }
+        }}
+        title={!isSpinning ? "Click Reel or Press Space to Spin" : ""}
         className={`relative flex-1 min-h-[480px] rounded-3xl bg-gradient-to-b from-[#080d1a] via-[#0b132b]/95 to-[#080d1a] border-2 transition-all duration-300 overflow-hidden shadow-glass ${
+          !isSpinning ? 'cursor-pointer hover:border-[#6fffe9] hover:shadow-neon-cyan' : ''
+        } ${
           isGlitching
             ? 'border-fuchsia-500 shadow-[0_0_50px_rgba(217,70,239,0.75)]'
             : isSpinning
@@ -451,6 +460,18 @@ export default function Wheel3D() {
               <AlertTriangle className="w-4 h-4 text-[#ff4b4b]" />
               <span className={`text-sm font-mono font-extrabold tracking-widest uppercase ${statusBanner.color}`}>
                 {statusBanner.text}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Click to Spin floating hint when idle */}
+        {!isSpinning && drawnNumbers.length < categories.length && (
+          <div className="absolute bottom-5 inset-x-0 z-30 flex justify-center pointer-events-none">
+            <div className="px-4 py-1.5 rounded-full bg-[#0b132b]/90 border border-[#6fffe9]/40 backdrop-blur-md shadow-neon-cyan flex items-center gap-2 animate-pulse">
+              <Play className="w-3.5 h-3.5 text-[#6fffe9] fill-current" />
+              <span className="text-[11px] font-mono font-extrabold tracking-wider text-[#6fffe9] uppercase">
+                Click Wheel or Press Space to Spin
               </span>
             </div>
           </div>

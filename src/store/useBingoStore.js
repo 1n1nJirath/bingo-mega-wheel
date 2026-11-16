@@ -177,7 +177,7 @@ export const useBingoStore = create((set, get) => {
       broadcastStateSnapshot(get());
     },
 
-    // Trigger a Gacha Spin from Host Dashboard (using Weighted Randomizer or forced Showcase Mode)
+    // Trigger a Gacha Spin from Host Dashboard or Broadcast View
     triggerSpin: (forcedTargetNumber = null) => {
       const state = get();
       if (state.isSpinning) return null;
@@ -217,11 +217,30 @@ export const useBingoStore = create((set, get) => {
         isSpinning: true,
       });
       broadcastStateSnapshot(get());
+
+      // Auto-recovery fallback: ensure spin state never gets permanently stuck
+      if (typeof window !== 'undefined') {
+        if (window.__bingoSpinSafetyTimeout) {
+          clearTimeout(window.__bingoSpinSafetyTimeout);
+        }
+        window.__bingoSpinSafetyTimeout = setTimeout(() => {
+          const s = get();
+          if (s.isSpinning && s.currentSpin?.id === spinPayload.id) {
+            get().completeSpin(spinPayload.id);
+          }
+        }, 9000);
+      }
+
       return spinPayload;
     },
 
     // Called when the 3D Wheel finishes its GSAP timeline animation
     completeSpin: (spinId) => {
+      if (typeof window !== 'undefined' && window.__bingoSpinSafetyTimeout) {
+        clearTimeout(window.__bingoSpinSafetyTimeout);
+        window.__bingoSpinSafetyTimeout = null;
+      }
+
       const state = get();
       if (!state.currentSpin || state.currentSpin.id !== spinId) return;
 

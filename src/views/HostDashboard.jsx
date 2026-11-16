@@ -13,6 +13,8 @@ import {
   Sliders,
   Database,
   AlertCircle,
+  Eye,
+  Grid,
 } from 'lucide-react';
 import { useBingoStore } from '../store/useBingoStore';
 import {
@@ -22,6 +24,7 @@ import {
 } from '../utils/defaultCategories';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import BingoGrid from '../components/BingoGrid';
+import Wheel3D from '../components/Wheel3D';
 
 export default function HostDashboard() {
   const categories = useBingoStore((s) => s.categories);
@@ -47,6 +50,7 @@ export default function HostDashboard() {
   const [regenerateOnApply, setRegenerateOnApply] = useState(true);
   const [savedNotice, setSavedNotice] = useState(false);
   const [validationError, setValidationError] = useState(null);
+  const [activeRightTab, setActiveRightTab] = useState('grid'); // 'grid' | 'wheel'
 
   // Sync textarea with current 1..N categories
   useEffect(() => {
@@ -382,22 +386,52 @@ export default function HostDashboard() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN (5 cols): Live Number-Only 5x5 Matrix Mirror + 1..N Master Pool Tracker */}
+        {/* RIGHT COLUMN (5 cols): Live Number-Only 5x5 Matrix Mirror + 3D Wheel Preview + 1..N Master Pool Tracker */}
         <div className="xl:col-span-5 flex flex-col gap-6">
-          {/* Live Interactive 5x5 Number-Only Matrix Mirror */}
+          {/* Live Interactive Mirror Card with Tab Switcher */}
           <div className="p-5 rounded-3xl bg-[#0e1117]/85 backdrop-blur-xl border border-white/10 shadow-glass">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-mono uppercase tracking-widest text-[#6fffe9]">
-                PROJECTOR 5x5 NUMBER-ONLY GRID (CLICK CELL TO TOGGLE)
-              </span>
+              {/* Tab Selector */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setActiveRightTab('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition ${
+                    activeRightTab === 'grid'
+                      ? 'bg-[#6fffe9] text-[#0b132b] shadow-neon-cyan'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                  <span>5x5 Grid Mirror</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveRightTab('wheel')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition ${
+                    activeRightTab === 'wheel'
+                      ? 'bg-[#ff4b4b] text-white shadow-neon-red'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>3D Wheel Live</span>
+                </button>
+              </div>
+
               {bingoWinState?.isBingo && (
                 <span className="px-2.5 py-0.5 rounded bg-[#6fffe9] text-[#0b132b] font-mono text-xs font-black">
                   BINGO ACTIVE!
                 </span>
               )}
             </div>
+
             <div className="h-[520px]">
-              <BingoGrid interactive={true} />
+              {activeRightTab === 'grid' ? (
+                <BingoGrid interactive={true} />
+              ) : (
+                <Wheel3D />
+              )}
             </div>
           </div>
 

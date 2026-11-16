@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Radio, Volume2, VolumeX, Settings, Maximize2 } from 'lucide-react';
+import { Radio, Volume2, VolumeX, Settings, Maximize2, Play } from 'lucide-react';
 import Wheel3D from '../components/Wheel3D';
 import BingoGrid from '../components/BingoGrid';
 import BingoCelebrationModal from '../components/BingoCelebrationModal';
@@ -13,8 +13,23 @@ export default function BroadcastView() {
   const toggleAudio = useBingoStore((s) => s.toggleAudio);
   const drawnNumbers = useBingoStore((s) => s.drawnNumbers);
   const syncMode = useBingoStore((s) => s.syncMode);
+  const isSpinning = useBingoStore((s) => s.isSpinning);
+  const triggerSpin = useBingoStore((s) => s.triggerSpin);
 
   const { unlockAudio } = useSoundEffects(audioEnabled);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Allow pressing Space to trigger spin from projector view
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        unlockAudio();
+        triggerSpin();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [triggerSpin]);
 
   const handleFullscreen = () => {
     unlockAudio();
@@ -23,6 +38,12 @@ export default function BroadcastView() {
     } else {
       document.exitFullscreen?.().catch(() => {});
     }
+  };
+
+  const handleSpinClick = (e) => {
+    e.stopPropagation();
+    unlockAudio();
+    triggerSpin();
   };
 
   return (
@@ -80,6 +101,22 @@ export default function BroadcastView() {
             title="Toggle Projector Fullscreen"
           >
             <Maximize2 className="w-5 h-5" />
+          </button>
+
+          {/* Direct Spin Wheel Button on Projector */}
+          <button
+            type="button"
+            disabled={isSpinning || drawnNumbers.length >= categories.length}
+            onClick={handleSpinClick}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-xs font-black uppercase tracking-wider transition ${
+              isSpinning
+                ? 'bg-[#ff4b4b]/20 border border-[#ff4b4b] text-[#ff4b4b] shadow-neon-red cursor-wait'
+                : 'bg-gradient-to-r from-[#ff4b4b] to-rose-600 text-white shadow-neon-red-strong hover:brightness-110 active:scale-95'
+            }`}
+            title="Trigger Spin (or press SPACE)"
+          >
+            <Play className={`w-3.5 h-3.5 fill-current ${isSpinning ? 'animate-spin' : ''}`} />
+            <span>{isSpinning ? 'SPINNING...' : 'SPIN (SPACE)'}</span>
           </button>
 
           <Link
